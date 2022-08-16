@@ -1,0 +1,140 @@
+---
+title: "Lobster data exploration"
+author: "Erica Bishop"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(janitor)
+```
+
+read in the data:
+
+```{r}
+
+lobster_abundance <- read_csv(here("data", "Lobster_Abundance_All_Years_20210412.csv"), na = "-99999")
+
+```
+
+Now find the count of lobsters found at each site
+
+```{r}
+
+lobster_tidy <- lobster_abundance |> 
+  uncount(COUNT) |> 
+  clean_names()
+
+```
+
+Now find the counts and mean sizes by site and year
+
+```{r}
+
+lobster_size_abundance <- lobster_tidy |> 
+  group_by(site, year) |> 
+  summarize(count_by_site = n(),
+            mean_length = mean(size_mm, na.rm = TRUE))
+
+
+lobster_site_plot <- ggplot(data = lobster_size_abundance,
+                            aes(x = year,
+                                y = count_by_site)) +
+  geom_point(aes(color = mean_length)) +
+  facet_wrap(~site)
+
+lobster_site_plot
+
+```
+
+## Find the proportion of legal lobsters at each site for 2020
+
+```{r}
+
+legal_lobsters <- lobster_tidy |> 
+  filter(year == "2020") |> 
+  mutate(legal = ifelse(size_mm >= 79.76, "yes", "no")) |> 
+  group_by(site, legal) |>
+  summarize(count_legal = n())
+
+##pct_legal_by_site <- legal_lobsters |> 
+  ##group_by(site) |> 
+  ##summarize(proportion_legal = )
+
+
+```
+
+Now create a graph showing the proportion
+
+```{r}
+
+ggplot(data = legal_lobsters,
+       aes(x = site, y = count_legal)) +
+  geom_col(position = "fill",
+           aes(fill = legal))
+
+
+```
+
+
+## Task 3: Lobster wrangling
+
+Filter:
+
+```{r}
+ex_a <- lobster_tidy |> 
+  filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+ex_b <- lobster_tidy |> 
+  filter(month == 8)
+
+ex_c <- lobster_tidy |> 
+  filter(site == "AQUE" | size_mm > 70)
+
+ex_d <- lobster_tidy |> 
+  filter(site != "NAPL")
+
+
+```
+
+group by and summarize:
+
+```{r}
+
+ex_e <- lobster_tidy |> 
+  group_by(site) |> 
+  summarize(mean_length = mean(size_mm, na.rm = TRUE),
+            sd_length = sd(size_mm, na.rm = TRUE))
+
+ex_f <- lobster_tidy |> 
+  group_by(month) |> 
+  summarize(max_length = max(size_mm, na.rm = TRUE))
+
+```
+
+mutate
+
+```{r}
+
+ex_g <- lobster_tidy |> 
+  mutate(size_cm = size_mm / 100)
+
+ex_h <- lobster_tidy |> 
+  mutate(site = tolower(site))
+
+ex_i <- lobster_tidy |> 
+  mutate(area = as.character(area))
+
+```
+
+
+
+
+
+
+
+
+
